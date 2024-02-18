@@ -1,3 +1,10 @@
+data "aws_subnets" "selected" {
+  filter {
+    name   = "vpc-id"
+    values = [aws_vpc.philips_vpc.id]
+  }
+}
+
 locals {
   tier_nacl_rules = var.nacl_rules
 }
@@ -17,7 +24,8 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "Public Subnet ${count.index + 1}"
+    Role = "public"
+    AZ   = var.availability_zones[count.index]
   }
 }
 
@@ -28,7 +36,8 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index % length(var.availability_zones)]
 
   tags = {
-    Name = "Private Subnet ${count.index + 1}"
+    Role = "private"
+    AZ   = var.availability_zones[count.index]
   }
 }
 
@@ -39,7 +48,8 @@ resource "aws_subnet" "data" {
   availability_zone = var.availability_zones[count.index % length(var.availability_zones)]
 
   tags = {
-    Name = "Data Subnet ${count.index + 1}"
+    Role = "data"
+    AZ   = var.availability_zones[count.index]
   }
 }
 
@@ -71,7 +81,7 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_eip" "nat" {
-  domain = vpc
+  domain = "vpc"
 }
 
 resource "aws_nat_gateway" "nat" {
@@ -279,7 +289,7 @@ resource "aws_vpc_endpoint" "ec2" {
   vpc_id            = aws_vpc.philips_vpc.id
   service_name      = "com.amazonaws.${var.region}.ec2"
   vpc_endpoint_type = "Interface"
-  subnet_ids = [aws_subnet.public[0].id, aws_subnet.public[1].id, aws_subnet.private[0].id, aws_subnet.private[1].id]
+  subnet_ids = tolist(data.aws_subnets.selected.ids)
   security_group_ids = [aws_security_group.ec2_endpoint_sg.id]
   private_dns_enabled = true
   tags = {

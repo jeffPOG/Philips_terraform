@@ -80,7 +80,8 @@ module "vpc_prod" {
           from_port = 3306, 
           to_port = 3306 
         }
-      ]
+      ],
+      egress = []
     }
   }
 }
