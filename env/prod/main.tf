@@ -24,7 +24,7 @@ module "vpc_prod" {
   private_subnet_count  = 2
   data_subnet_count     = 2
   
-  # Defines Network ACL (NACL) rules for each subnet type
+  # Defines NACL rules for each subnet type
   nacl_rules = {
     public = {
       ingress = [
